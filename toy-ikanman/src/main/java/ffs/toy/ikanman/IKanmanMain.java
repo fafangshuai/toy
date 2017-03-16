@@ -79,8 +79,8 @@ public class IKanmanMain {
     String text = new UsageBuilder()
         .cmd("printCatalog", "打印漫画目录").arg("comicUrl", "漫画Url")
         .cmd("printCatalogForH", "特殊漫画目录打印").arg("bid", "漫画Id").arg("startCid", "起始章节Id")
-        .cmd("download", "从章节Url下载").arg("inputFile", "章节Url文件").arg("parentDir", "保存漫画的目录").arg("customName", "自定义漫画名称", false)
-        .cmd("downloadFromJson", "从章节Json下载").arg("inputFile", "章节Json文件").arg("parentDir", "保存漫画的目录").arg("customName", "自定义漫画名称", false)
+        .cmd("download", "从章节Url下载").arg("inputFile", "章节Url文件（utf-8）").arg("parentDir", "保存漫画的目录").arg("customName", "自定义漫画名称", false)
+        .cmd("downloadFromJson", "从章节Json下载").arg("inputFile", "章节Json文件（utf-8）").arg("parentDir", "保存漫画的目录").arg("customName", "自定义漫画名称", false)
         .build();
     System.err.println(text);
     System.exit(1);

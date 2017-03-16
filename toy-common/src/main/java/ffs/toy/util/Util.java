@@ -146,7 +146,7 @@ public class Util {
     try {
       return getLines(new FileInputStream(inputFile));
     } catch (FileNotFoundException e) {
-      throw new RuntimeException("获取文件中的所有行出错，文件：" + inputFile, e);
+      throw new RuntimeException("获取文件中的所有行出错", e);
     }
   }
 
