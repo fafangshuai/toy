@@ -111,7 +111,7 @@ public class IKanmanMain {
    */
   private static void printCatalogForH(String bid, String startCid) {
     try {
-      List<String> list = iKanmanService.resolveCatalogFromChapterNav(Integer.parseInt(bid), Integer.parseInt(startCid));
+      List<String> list = iKanmanService.resolveCatalogFromChapterNav2(Integer.parseInt(bid), Integer.parseInt(startCid));
       resolveChapters(list);
     } catch (Exception e) {
       throw new RuntimeException("打印漫画目录信息出错：bid=" + bid + ", startCid=" + startCid, e);

@@ -20,6 +20,26 @@ public class CInfo {
   private String path;
   // 文件数
   private Integer len;
+  // 前一章节id
+  private String prevId;
+  // 后一章节id
+  private String nextId;
+
+  public String getPrevId() {
+    return prevId;
+  }
+
+  public void setPrevId(String prevId) {
+    this.prevId = prevId;
+  }
+
+  public String getNextId() {
+    return nextId;
+  }
+
+  public void setNextId(String nextId) {
+    this.nextId = nextId;
+  }
 
   public String getBname() {
     return bname;

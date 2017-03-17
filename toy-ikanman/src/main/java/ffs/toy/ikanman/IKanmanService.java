@@ -128,6 +128,30 @@ class IKanmanService {
    *
    * @param bid      漫画id
    * @param startCid 起始章节id
+   * @return 章节json列表
+   */
+  List<String> resolveCatalogFromChapterNav2(int bid, int startCid) {
+    String chapterUrlPrefix = WWW_HOST + "/comic/" + bid + "/";
+    List<String> result = new ArrayList<>();
+    try {
+      int nextCid = startCid;
+      while (nextCid > 0) {
+        String chapterUrl = chapterUrlPrefix + nextCid + ".html";
+        String cInfoJson = resolveChapter(chapterUrl);
+        CInfo cInfo = JSON.parseObject(cInfoJson, CInfo.class);
+        nextCid = Integer.parseInt(cInfo.getNextId());
+      }
+      return result;
+    } catch (Exception e) {
+      throw new RuntimeException("解析章节地址出错", e);
+    }
+  }
+
+  /**
+   * 从章节导航中解析漫画目录
+   *
+   * @param bid      漫画id
+   * @param startCid 起始章节id
    * @return 章节url列表
    */
   List<String> resolveCatalogFromChapterNav(int bid, int startCid) {
