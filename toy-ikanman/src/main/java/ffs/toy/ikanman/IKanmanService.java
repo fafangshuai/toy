@@ -126,6 +126,11 @@ class IKanmanService {
    */
   void download(String remoteUrl, String localPath, String referer) {
     try {
+      File localFile = new File(localPath);
+      if (localFile.exists()) {
+        System.out.printf("文件已经下载：%s --> %s\n", remoteUrl, localPath);
+        return;
+      }
       // 把空格转换为%20
       String noSpaceUrl = remoteUrl.replaceAll(" ", "%20");
       // 编码路径中的中文
@@ -138,7 +143,8 @@ class IKanmanService {
       // 从网络中下载
       InputStream is = conn.getInputStream();
       // 写入本地
-      FileOutputStream fos = new FileOutputStream(new File(localPath));
+
+      FileOutputStream fos = new FileOutputStream(localFile);
       copy(is, fos);
       System.out.printf("下载文件成功：%s --> %s\n", remoteUrl, localPath);
       is.close();
