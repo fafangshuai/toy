@@ -20,17 +20,15 @@ import java.util.regex.Pattern;
 import static java.lang.String.format;
 
 class IKanmanService {
-  static final String WWW_HOST = "http://www.ikanman.com";
+  private static final String WWW_HOST = "http://www.ikanman.com";
   static final String IMAGE_HOST = "http://p.yogajx.com";
-  static final String CHAPTER_NAV_URL = "http://www.ikanman.com/support/chapter.ashx?";
+  private static final String CHAPTER_NAV_URL = "http://www.ikanman.com/support/chapter.ashx?";
   private static final int MAX_RECONNECT_TIMES = 3;
 
-  public static void main(String[] args) throws IOException {
-    String remoteUrl = IMAGE_HOST + "/ps3/l/恋着的♀X爱着的♀[藤坂空树]/act_15/jmydm0016-83822.JPG";
-    URL url = new URL(remoteUrl);
-    URLConnection conn = url.openConnection();
-    InputStream is = conn.getInputStream();
-    copy(is, new FileOutputStream("D:\\Desktop\\a.jpg"));
+  public static void main(String[] args) throws Exception {
+    initScriptEngine();
+    IKanmanService iKanmanService = new IKanmanService();
+    iKanmanService.resolveCatalogFromChapterNav2(7708, 154704);
   }
 
   private static ScriptEngine engine;
@@ -41,7 +39,7 @@ class IKanmanService {
   static void initScriptEngine() {
     try {
       engine = new ScriptEngineManager().getEngineByName("javascript");
-      InputStream in = IKanmanService.class.getClassLoader().getResourceAsStream("ikanman.js");
+      InputStream in = IKanmanService.class.getClassLoader().getResourceAsStream("ikanman.v2.js");
       engine.eval(new InputStreamReader(in));
     } catch (ScriptException e) {
       throw new RuntimeException("初始化js引擎出错", e);
@@ -70,6 +68,33 @@ class IKanmanService {
    * @param chapterUrl 章节url e.g. HOST/comic/4705/251315.html
    * @return 章节信息的json
    */
+  String resolveChapter2(String chapterUrl) {
+    try {
+      Document doc = getDocument(chapterUrl.trim());
+      Elements scriptList = doc.select("script");
+      String flag = "window[\"\\x65\\x76\\x61\\x6c\"]";
+      for (Element script : scriptList) {
+        String text = script.html();
+        if (text.startsWith(flag)) {
+          text = text.replace(flag, "eval");
+          String json = decryptToJson2(text);
+          System.out.printf("%s --> %s\n", chapterUrl, json);
+          return json;
+        }
+      }
+    } catch (Exception e) {
+      throw new RuntimeException("解析章节信息出错：" + chapterUrl, e);
+    }
+    return null;
+  }
+
+  /**
+   * 解析章节信息获取每一页的具体地址信息，从www站解析，历史版本2017.3
+   *
+   * @param chapterUrl 章节url e.g. HOST/comic/4705/251315.html
+   * @return 章节信息的json
+   */
+  @Deprecated
   String resolveChapter(String chapterUrl) {
     try {
       Document doc = getDocument(chapterUrl.trim());
@@ -137,7 +162,7 @@ class IKanmanService {
       int nextCid = startCid;
       while (nextCid > 0) {
         String chapterUrl = chapterUrlPrefix + nextCid + ".html";
-        String cInfoJson = resolveChapter(chapterUrl);
+        String cInfoJson = resolveChapter2(chapterUrl);
         CInfo cInfo = JSON.parseObject(cInfoJson, CInfo.class);
         nextCid = Integer.parseInt(cInfo.getNextId());
       }
@@ -148,12 +173,13 @@ class IKanmanService {
   }
 
   /**
-   * 从章节导航中解析漫画目录
+   * 从章节导航中解析漫画目录 历史版本 2017.3
    *
    * @param bid      漫画id
    * @param startCid 起始章节id
    * @return 章节url列表
    */
+  @Deprecated
   List<String> resolveCatalogFromChapterNav(int bid, int startCid) {
     String chapterNavUrlPrefix = CHAPTER_NAV_URL + "bid=" + bid + "&cid=";
     String chapterUrlPrefix = WWW_HOST + "/comic/" + bid + "/";
@@ -193,26 +219,37 @@ class IKanmanService {
   }
 
   /**
-   * 解密章节详细信息密文
+   * 解密章节详细信息密文2
    *
    * @param input 密文
    * @return json
    */
+  private String decryptToJson2(String input) throws Exception {
+    engine.eval(input);
+    return JSON.toJSONString(engine.get("cInfo"), VALUE_FILTER);
+  }
+
+  /**
+   * 解密章节详细信息密文 历史版本暂时保留 2017.3
+   *
+   * @param input 密文
+   * @return json
+   */
+  @Deprecated
   private String decryptToJson(String input) throws Exception {
     Invocable inv = (Invocable) engine;
     Object o = inv.invokeFunction("decryptDES", input);
     engine.eval(String.valueOf(o));
-    return JSON.toJSONString(engine.get("cInfo"), new ValueFilter() {
-      @Override
-      public Object process(Object object, String name, Object value) {
-        if (name.equals("files")) {
-          Bindings jsFiles = (Bindings) value;
-          return jsFiles.values();
-        }
-        return value;
-      }
-    });
+    return JSON.toJSONString(engine.get("cInfo"), VALUE_FILTER);
   }
+
+  private static final ValueFilter VALUE_FILTER = (object, name, value) -> {
+    if (name.equals("files")) {
+      Bindings jsFiles = (Bindings) value;
+      return jsFiles.values();
+    }
+    return value;
+  };
 
   /**
    * 获取html文档，提供重试机制

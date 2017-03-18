@@ -193,7 +193,7 @@ public class IKanmanMain {
     public String call() throws Exception {
       String json = null;
       try {
-        json = iKanmanService.resolveChapter(chapterUrl);
+        json = iKanmanService.resolveChapter2(chapterUrl);
       } catch (Exception e) {
         e.printStackTrace();
       }
