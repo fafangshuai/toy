@@ -8,7 +8,15 @@ import java.io.File;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.*;
+import java.util.function.BiConsumer;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.lang.String.format;
 
@@ -30,8 +38,10 @@ public class IKanmanMain {
       String action = args[0];
       switch (action) {
         case "printCatalog":
-          String comicUrl = args[1];
-          printCatalog(comicUrl);
+          printCatalog(args[1]);
+          break;
+        case "printCatalogJson":
+          printCatalogJson(args[1]);
           break;
         case "printCatalogForH":
           if (args.length < 3) {
@@ -78,6 +88,7 @@ public class IKanmanMain {
   private static void usage() {
     String text = new UsageBuilder()
         .cmd("printCatalog", "打印漫画目录").arg("comicUrl", "漫画Url")
+        .cmd("printCatalogJson", "打印漫画目录Json格式").arg("comicUrl", "漫画Url")
         .cmd("printCatalogForH", "特殊漫画目录打印").arg("bid", "漫画Id").arg("startCid", "起始章节Id")
         .cmd("download", "从章节Url下载").arg("inputFile", "章节Url文件（utf-8）").arg("parentDir", "保存漫画的目录").arg("customName", "自定义漫画名称", false)
         .cmd("downloadFromJson", "从章节Json下载").arg("inputFile", "章节Json文件（utf-8）").arg("parentDir", "保存漫画的目录").arg("customName", "自定义漫画名称", false)
@@ -101,6 +112,16 @@ public class IKanmanMain {
     } catch (Exception e) {
       throw new RuntimeException("打印漫画目录信息出错：" + comicUrl, e);
     }
+  }
+
+  /**
+   * 输出目录json信息
+   * @param comicUrl 漫画url
+   */
+  private static void printCatalogJson(String comicUrl) {
+    List<String[]> list = iKanmanService.resolveCatalog(comicUrl);
+    List<String> chapterUrlList = list.stream().map(strings -> strings[0]).collect(Collectors.toList());
+    resolveChapters(chapterUrlList);
   }
 
   /**
