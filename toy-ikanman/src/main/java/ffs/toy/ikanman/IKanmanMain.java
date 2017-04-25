@@ -54,6 +54,9 @@ public class IKanmanMain {
           }
           downloadChaptersFromJson(args[1], args[2], determineCustomName(args));
           break;
+        case "retry":
+          retry(args[1]);
+          break;
         default:
           usage();
           break;
@@ -115,6 +118,24 @@ public class IKanmanMain {
     List<String[]> list = iKanmanService.resolveCatalog(comicUrl);
     List<String> chapterUrlList = list.stream().map(strings -> strings[0]).collect(Collectors.toList());
     resolveChapters(chapterUrlList);
+  }
+
+  /**
+   * 重试
+   * @param inputFile 输入文件
+   */
+  private static void retry(String inputFile) {
+    List<String> lines = Util.getLines(inputFile);
+    for (String line : lines) {
+      String[] params = line.split(",");
+      String remote = params[0];
+      String local = params[1];
+      String referer = null;
+      if (params.length > 2) {
+        referer = params[2];
+      }
+      pool.execute(new DownloadChapterTask(remote, local, referer));
+    }
   }
 
   /**

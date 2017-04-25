@@ -9,8 +9,10 @@ import org.jsoup.select.Elements;
 
 import javax.script.*;
 import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +30,7 @@ class IKanmanService {
   public static void main(String[] args) throws Exception {
     initScriptEngine();
     IKanmanService iKanmanService = new IKanmanService();
-    iKanmanService.resolveCatalogFromChapterNav2(7708, 154704);
+    iKanmanService.download("http://p.yogajx.com/ps1/w/wztx/第446回/20150914223807_032%20%E5%89%AF%E6%9C%AC.jpg", "D:\\Desktop\\014.jpg", null);
   }
 
   private static ScriptEngine engine;
@@ -135,22 +137,31 @@ class IKanmanService {
       String noSpaceUrl = remoteUrl.replaceAll(" ", "%20");
       // 编码路径中的中文
       URL url = new URL(noSpaceUrl);
-      URLConnection conn = url.openConnection();
-      // 增加跨域支持
-      if (referer != null) {
-        conn.addRequestProperty("Referer", referer);
+      HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+      addReferer(referer, conn);
+      conn.connect();
+      if (conn.getResponseCode() == 400) {
+        conn = (HttpURLConnection) new URL(URLDecoder.decode(noSpaceUrl, "utf-8")).openConnection();
+        addReferer(referer, conn);
+        conn.connect();
       }
       // 从网络中下载
       InputStream is = conn.getInputStream();
       // 写入本地
-
       FileOutputStream fos = new FileOutputStream(localFile);
       copy(is, fos);
       System.out.printf("下载文件成功：%s --> %s\n", remoteUrl, localPath);
       is.close();
       fos.close();
     } catch (IOException e) {
-      throw new RuntimeException(format("下载文件失败：%s --> %s", remoteUrl, localPath), e);
+      throw new RuntimeException(format("下载文件失败：%s,%s", remoteUrl, localPath) + (referer == null ? "" : "," + referer), e);
+    }
+  }
+
+  private void addReferer(String referer, HttpURLConnection conn) {
+    // 增加跨域支持
+    if (referer != null) {
+      conn.addRequestProperty("Referer", referer);
     }
   }
 
